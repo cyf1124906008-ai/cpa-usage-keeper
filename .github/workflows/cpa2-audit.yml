@@ -1,0 +1,40 @@
+name: CPA2 remote audit
+
+on:
+  push:
+    paths:
+      - ".github/workflows/cpa2-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SSHPASS: ${{ secrets.CPA2_ROOT_PASSWORD }}
+    steps:
+      - name: Install SSH password helper
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq sshpass
+      - name: Inspect CPA2 host
+        shell: bash
+        run: |
+          set -euo pipefail
+          sshpass -e ssh             -o StrictHostKeyChecking=no             -o UserKnownHostsFile=/dev/null             -o ConnectTimeout=15             root@47.251.143.204 '
+              set -eu
+              echo "=== SYSTEM ==="
+              uname -a
+              cat /etc/os-release
+              echo "=== RESOURCES ==="
+              df -h /
+              free -h || true
+              echo "=== DOCKER ==="
+              command -v docker || true
+              docker --version || true
+              docker compose version || true
+              docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Ports}}" || true
+              echo "=== LISTENERS ==="
+              ss -ltnp || true
+            '
