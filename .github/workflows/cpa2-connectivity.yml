@@ -1,0 +1,28 @@
+name: CPA2 connectivity check
+
+on:
+  push:
+    paths:
+      - ".github/workflows/cpa2-connectivity.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ssh-banner:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check CPA2 SSH banner
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if timeout 15 ssh-keyscan -T 10 -p 22 47.251.143.204; then
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "CPA2 did not return an SSH banner on port 22"
+          exit 1
