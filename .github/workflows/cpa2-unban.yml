@@ -1,0 +1,31 @@
+name: CPA2 clear management ban
+
+on:
+  push:
+    paths:
+      - ".github/workflows/cpa2-unban.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  clear-ban:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SSHPASS: ${{ secrets.CPA2_ROOT_PASSWORD }}
+    steps:
+      - name: Install SSH password helper
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq sshpass
+      - name: Restart CPA2 and verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          sshpass -e ssh             -o StrictHostKeyChecking=no             -o UserKnownHostsFile=/dev/null             -o ConnectTimeout=15             root@47.251.143.204 '
+              set -eu
+              docker restart cpa2
+              sleep 4
+              curl -fsS http://127.0.0.1:3000/
+              echo
+              docker ps --filter name=cpa2 --format "table {{.Names}}\t{{.Status}}"
+            '
